@@ -20,10 +20,11 @@ To encode 16-bit PCM data, place it into a `java.nio.ShortBuffer`, create an `AD
 ByteBuffer encodePCM(ShortBuffer pcmInput, int channels, int sampleRate, boolean shape) {
     ADPCMEncoderConfig cfg = 
         ADPCMEncoder.configure()
-        .setChannels    (channels)   // 1 for mono, 2 for stereo
-        .setSampleRate  (sampleRate) // sample rate in Hz
-        .setNoiseShaping(shape)      // noise shaping; true=on, false=off
-        .end();                      // create the configuration object
+        .setChannels    (channels)                           // 1 for mono, 2 for stereo
+        .setSampleRate  (sampleRate)                         // sample rate in Hz
+        .setNoiseShaping(shape)                              // noise shaping; true=on, false=off
+        .setBlockSize   (ADPCMDecoderConfig.AUTO_BLOCK_SIZE) // compute block size automatically
+        .end();                                              // create the configuration object
     
     // ADPCMEncoderConfig.computeOutputSize(ShortBuffer) computes the minimum output buffer size
     ByteBuffer adpcmOutput = ByteBuffer.allocate(cfg.computeOutputSize(pcmInput));
