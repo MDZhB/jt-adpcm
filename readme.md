@@ -18,7 +18,6 @@ Add the following to the `<dependencies>` element in your `pom.xml`:
 To encode 16-bit PCM data, place it into a `java.nio.ShortBuffer`, create an `ADPCMEncoderConfig`, then use the configuration to instantiate an `ADPCMEncoder`. The `ADPCMEncoderConfig`'s `computeOuputSize(ShortBuffer)` method will return the minimum size of the output buffer for the given input.
 ```java
 ByteBuffer encodePCM(ShortBuffer pcmInput, int channels, int sampleRate, boolean shape) {
-    
     ADPCMEncoderConfig cfg = 
         ADPCMEncoder.configure()
         .setChannels    (channels)   // 1 for mono, 2 for stereo
