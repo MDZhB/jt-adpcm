@@ -76,8 +76,8 @@ public final class ADPCMEncoderConfig {
         /**
          * Sets the output block size in bytes. A larger block size increases compression, but decreases sound quality;
          * a smaller block size decreases compression, but increases sound quality.
-         * @param size  a power of two >= 256 and <= 32768, or {@link #AUTO_BLOCK_SIZE} to compute the block size
-         *              automatically
+         * @param size  a power of two between 256 and 32768 inclusive, or {@link #AUTO_BLOCK_SIZE} to compute the block
+         *              size automatically
          * @return this builder
          */
         public Builder setBlockSize(int size) {

@@ -59,8 +59,8 @@ public final class ADPCMDecoderConfig {
 
         /**
          * Sets the input block size in bytes.
-         * @param size  a power of two >= 256 and <= 32768, or {@link #AUTO_BLOCK_SIZE} to compute the block size
-         *              automatically with the formula used by {@link ADPCMEncoderConfig}
+         * @param size  a power of two between 256 and 32768 inclusive, or {@link #AUTO_BLOCK_SIZE} to compute the block
+         *              size automatically with the formula used by {@link ADPCMEncoderConfig}
          * @return this builder
          */
         public Builder setBlockSize(int size) {
