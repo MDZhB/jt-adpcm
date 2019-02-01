@@ -2,7 +2,7 @@
 [![Javadocs](https://www.javadoc.io/badge/com.github.mdzhb/jt-adpcm.svg)](https://www.javadoc.io/doc/com.github.mdzhb/jt-adpcm)
 
 ## Summary
-`jt-adpcm` provides a high-quality ADPCM encoder and an ADPCM decoder for Java 9+. This is a port of David Bryant's [ADPCM-XQ](https://github.com/dbry/adpcm-xq) library. 
+`jt-adpcm` provides a high-quality ADPCM encoder and an ADPCM decoder for Java 9+. It is a port of David Bryant's [ADPCM-XQ](https://github.com/dbry/adpcm-xq) library. 
 
 ## Usage
 ### Maven
