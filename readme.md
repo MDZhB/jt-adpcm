@@ -11,7 +11,7 @@ Add the following to the `<dependencies>` element in your `pom.xml`:
 <dependency>
   <groupId>com.github.mdzhb</groupId>
   <artifactId>jt-adpcm</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
 </dependency>
 ```
 ### Encoding
