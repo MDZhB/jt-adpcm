@@ -2,7 +2,6 @@ package com.jiggawatt.jt.tools.adpcm.util;
 
 import com.jiggawatt.jt.tools.adpcm.ADPCMEncoderConfig;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -66,7 +65,7 @@ public final class WAVFile {
         dst.factSamples       = numSamples;
         dst.format            = WAVE_FORMAT_IMA_ADPCM;
         dst.numSamples        = numSamples;
-        dst.realBitsPerSample = cfg.getSamplesPerBlock();
+        dst.realBitsPerSample = 16;
 
         dst.formatTag        = WAVE_FORMAT_EXTENSIBLE;
         dst.numChannels      = cfg.getChannels();
@@ -95,7 +94,7 @@ public final class WAVFile {
         dst.factSamples       = numSamples;
         dst.format            = WAVE_FORMAT_PCM;
         dst.numSamples        = numSamples;
-        dst.realBitsPerSample = bytesPerSample;
+        dst.realBitsPerSample = bitsPerSample;
 
         dst.formatTag        = WAVE_FORMAT_PCM;
         dst.numChannels      = channels;
@@ -307,12 +306,21 @@ public final class WAVFile {
     }
 
     private static ByteBuffer copyChunk(ByteBuffer riffChunk, int chunkId, int chunkSize) {
-        ByteBuffer ret = riffChunk
-            .duplicate()
-            .order(ByteOrder.LITTLE_ENDIAN)
-            .limit(riffChunk.position()+chunkSize);
-        riffChunk.position(riffChunk.position() + chunkSize);
-        return ret;
+        int offset = riffChunk.position();
+
+        ByteBuffer copy =
+            ByteBuffer.allocate(chunkSize)
+            .order(ByteOrder.LITTLE_ENDIAN);
+
+        copy.put(
+            riffChunk.duplicate()
+            .position(offset)
+            .limit(offset + chunkSize)
+        );
+
+        riffChunk.position(offset + chunkSize);
+
+        return copy.rewind();
     }
 
     private static void skipChunk(ByteBuffer riffChunk, int chunkSize) {
@@ -337,13 +345,15 @@ public final class WAVFile {
         }
         dst.GUID = new String(b);
 
-        dst.format = dst.formatTag == WAVE_FORMAT_EXTENSIBLE && in.capacity()==40
+        final boolean hasExtensionBytes = in.capacity() >= 40;
+
+        dst.format = hasExtensionBytes && dst.formatTag == WAVE_FORMAT_EXTENSIBLE
                 ? dst.subFormat
                 : dst.formatTag;
 
         int validBitsPerSample = dst.union;
 
-        dst.realBitsPerSample = in.capacity() == 40 && validBitsPerSample!=0
+        dst.realBitsPerSample = hasExtensionBytes && validBitsPerSample!=0
                 ? validBitsPerSample
                 : dst.rawBitsPerSample;
 

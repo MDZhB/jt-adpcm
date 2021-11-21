@@ -16,4 +16,12 @@ public class TestUtils {
             return WAVFile.fromStream(in);
         }
     }
+
+    public static InputStream openClasspathStream(String name) throws IOException {
+        InputStream in = TestUtils.class.getResourceAsStream(name);
+        if (in == null) {
+            throw new FileNotFoundException(name);
+        }
+        return in;
+    }
 }

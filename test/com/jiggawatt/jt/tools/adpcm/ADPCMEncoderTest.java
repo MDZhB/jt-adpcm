@@ -64,10 +64,10 @@ public class ADPCMEncoderTest {
         WAVFile expectWav = TestUtils.getClasspathWav("adpcm_"+name(bits, sampleRate, channels, !shape));
 
         ADPCMEncoderConfig cfg = ADPCMEncoder.configure()
-                .setChannels(channels)
-                .setSampleRate(sampleRate)
-                .setNoiseShaping(shape)
-                .end();
+            .setChannels(channels)
+            .setSampleRate(sampleRate)
+            .setNoiseShaping(shape)
+            .end();
 
         ShortBuffer input  = inputWav.getReadOnlyData().asShortBuffer();
         ByteBuffer  expect = expectWav.getReadOnlyData();
