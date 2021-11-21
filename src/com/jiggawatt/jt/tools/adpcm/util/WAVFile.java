@@ -2,12 +2,16 @@ package com.jiggawatt.jt.tools.adpcm.util;
 
 import com.jiggawatt.jt.tools.adpcm.ADPCMEncoderConfig;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static com.jiggawatt.jt.tools.adpcm.impl.RIFFUtil.*;
 
@@ -81,11 +85,12 @@ public final class WAVFile {
         return dst;
     }
 
-    private static WAVFile fromPCMBuffer(ByteBuffer pcmData, int numSamples, ADPCMEncoderConfig cfg) {
+    private static WAVFile fromPCMBuffer(ByteBuffer pcmData, int channels, int sampleRate) {
         WAVFile dst = new WAVFile();
 
         final int bytesPerSample = 2;
         final int bitsPerSample  = 16;
+        final int numSamples     = pcmData.capacity() / (bytesPerSample * channels);
 
         dst.factSamples       = numSamples;
         dst.format            = WAVE_FORMAT_PCM;
@@ -93,10 +98,10 @@ public final class WAVFile {
         dst.realBitsPerSample = bytesPerSample;
 
         dst.formatTag        = WAVE_FORMAT_PCM;
-        dst.numChannels      = cfg.getChannels();
-        dst.sampleRate       = cfg.getSampleRate();
-        dst.bytesPerSecond   = cfg.getSampleRate() * cfg.getChannels() * bytesPerSample;
-        dst.blockAlign       = bytesPerSample * cfg.getChannels();
+        dst.numChannels      = channels;
+        dst.sampleRate       = sampleRate;
+        dst.bytesPerSecond   = sampleRate * channels * bytesPerSample;
+        dst.blockAlign       = bytesPerSample * channels;
         dst.rawBitsPerSample = bitsPerSample;
 
         // the following members are not written for pcm files
@@ -109,6 +114,16 @@ public final class WAVFile {
         dst.data = pcmData.asReadOnlyBuffer().duplicate().rewind();
 
         return dst;
+    }
+
+    public static WAVFile fromFile(String filePath) throws IOException {
+        return WAVFile.fromFile(Paths.get(filePath));
+    }
+
+    public static WAVFile fromFile(Path filePath) throws IOException {
+        try (InputStream in = Files.newInputStream(filePath)) {
+            return WAVFile.fromStream(in);
+        }
     }
 
     public static WAVFile fromStream(InputStream in) throws IOException {
@@ -139,8 +154,8 @@ public final class WAVFile {
         ByteBuffer dataChunk = null;
 
         while (riffChunk.hasRemaining()) {
-            final int chunkId   = intLittleEndian(in);
-            final int chunkSize = intLittleEndian(in);
+            final int chunkId   = riffChunk.getInt();
+            final int chunkSize = riffChunk.getInt();
 
             if (chunkId == FMT_ID && fmtChunk == null) {
                 fmtChunk = copyChunk(riffChunk, chunkId, chunkSize);
@@ -189,7 +204,7 @@ public final class WAVFile {
         return numSamples;
     }
 
-    public int getBlockAlign() {
+    public int getBlockSize() {
         return blockAlign;
     }
 
@@ -362,15 +377,15 @@ public final class WAVFile {
     }
 
     private static int uint16(ByteBuffer in) {
-        return in.hasRemaining()?Short.toUnsignedInt(in.getShort()):0;
+        return in.hasRemaining() ? Short.toUnsignedInt(in.getShort()) : 0;
     }
 
     private static int uint32(ByteBuffer in) {
-        return in.hasRemaining()?in.getInt():0;
+        return in.hasRemaining() ? in.getInt() : 0;
     }
 
     private static byte int8(ByteBuffer in) {
-        return in.hasRemaining()?in.get():0;
+        return in.hasRemaining() ? in.get() : 0;
     }
 
     private static void readFactChunk(WAVFile dst, ByteBuffer in) {

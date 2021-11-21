@@ -1,6 +1,7 @@
 package com.jiggawatt.jt.tools.adpcm;
 
-import com.jiggawatt.jt.tools.adpcm.data.WAVFile;
+import com.jiggawatt.jt.tools.adpcm.data.TestUtils;
+import com.jiggawatt.jt.tools.adpcm.util.WAVFile;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -59,8 +60,8 @@ public class ADPCMDecoderTest {
     private void doTest(int bits, int sampleRate, int channels, boolean shape) throws IOException {
         // load test data
         //--------------------------------------------------------------------------------------------------------------
-        WAVFile inputWav  = new WAVFile("adpcm_"+name(bits, sampleRate, channels, !shape));
-        WAVFile expectWav = new WAVFile("dec_"  +name(bits, sampleRate, channels, !shape));
+        WAVFile inputWav  = TestUtils.getClasspathWav("adpcm_"+name(bits, sampleRate, channels, !shape));
+        WAVFile expectWav = TestUtils.getClasspathWav("dec_"  +name(bits, sampleRate, channels, !shape));
 
         ADPCMDecoderConfig cfg =
             ADPCMDecoder.configure()
