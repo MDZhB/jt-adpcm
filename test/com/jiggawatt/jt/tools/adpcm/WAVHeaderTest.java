@@ -11,7 +11,8 @@ import static org.junit.Assert.assertEquals;
 
 import static com.jiggawatt.jt.tools.adpcm.util.WAVFile.Format.*;
 
-public class WAVFileTest {
+public class WAVHeaderTest {
+
     @Test
     public void readsMonoPcmFileHeader() throws IOException {
         try (InputStream in = TestUtils.openClasspathStream("pcm_16bit_8000Hz_mono.wav")) {
@@ -39,6 +40,7 @@ public class WAVFileTest {
             assertEquals(4,     file.getBlockSize());
         }
     }
+
     @Test
     public void readsMonoAdpcmFileHeader() throws IOException {
         try (InputStream in = TestUtils.openClasspathStream("adpcm_16bit_8000Hz_mono.wav")) {

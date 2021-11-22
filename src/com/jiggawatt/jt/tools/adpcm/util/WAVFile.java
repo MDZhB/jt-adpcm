@@ -2,6 +2,7 @@ package com.jiggawatt.jt.tools.adpcm.util;
 
 import com.jiggawatt.jt.tools.adpcm.ADPCMEncoderConfig;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -212,20 +213,17 @@ public final class WAVFile {
     }
 
     public void dump(OutputStream out) throws IOException {
+        DataOutputStream dataOut = new DataOutputStream(out);
+
         // create format chunk
         // =============================================================================================================
         final boolean isPcm = getFormat() == Format.PCM;
 
         final ByteBuffer fmtChunk =
-            ByteBuffer.allocate(
-                isPcm
-                ? 8 + 16
-                : 8 + 26 + 14 // size of format chunk = 8-byte header + 26 bytes + 14-byte format GUID remainder
-            )
+            ByteBuffer
+            .allocate(26 + 14) // size of format chunk = 8-byte header + 26 bytes + 14-byte format GUID remainder
             .order(ByteOrder.LITTLE_ENDIAN);
 
-        fmtChunk.putInt  (FMT_ID);
-        fmtChunk.putInt  (fmtChunk.capacity() - 8);
         fmtChunk.putShort((short) formatTag);
         fmtChunk.putShort((short) numChannels);
         fmtChunk.putInt  (sampleRate);
@@ -236,20 +234,20 @@ public final class WAVFile {
         if (!isPcm) {
             fmtChunk.putShort((short) cbSize);
             fmtChunk.putShort((short) union);
-            fmtChunk.putInt  (channelMask);
-            fmtChunk.putShort((short) subFormat);
-            fmtChunk.put     (GUID.getBytes(StandardCharsets.US_ASCII));
+            if (channelMask != 0 && subFormat != 0) {
+                fmtChunk.putInt  (channelMask);
+                fmtChunk.putShort((short) subFormat);
+                fmtChunk.put     (GUID.getBytes(StandardCharsets.US_ASCII));
+            }
         }
 
-        fmtChunk.rewind();
+        fmtChunk.limit(fmtChunk.position()).rewind();
 
         // create optional fact chunk
         // =============================================================================================================
         final ByteBuffer factChunk;
         if (!isPcm) {
-            factChunk = ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN);
-            factChunk.putInt(FACT_ID);
-            factChunk.putInt(4);
+            factChunk = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN);
             factChunk.putInt(factSamples);
             factChunk.rewind();
         } else {
@@ -259,14 +257,15 @@ public final class WAVFile {
         // create data chunk
         // =============================================================================================================
         // data chunk might include padding byte
-        final int dataPadding      = data.capacity() % 2 == 0 ? 0 : 1;
-        final int dataContentBytes = data.capacity() + dataPadding;
-        final int dataTotalBytes   = dataContentBytes + 8;
+        final int dataPadding = data.capacity() % 2 == 0 ? 0 : 1;
 
         // populate header
         // =============================================================================================================
-        final int fileSize = fmtChunk.capacity() + factChunk.capacity() + dataTotalBytes;
-        ByteBuffer header = ByteBuffer.allocate(12);
+        final int fileSize =
+                4 + chunkSize(fmtChunk)
+                + (factChunk.limit() > 0 ? chunkSize(factChunk) : 0)
+                + chunkSize(data) + dataPadding;
+        ByteBuffer header = ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN);
         header.putInt(RIFF_ID);
         header.putInt(fileSize);
         header.putInt(WAVE_ID);
@@ -274,18 +273,13 @@ public final class WAVFile {
         // dump all chunks
         // =============================================================================================================
         out.write(header.array());
-        out.write(fmtChunk.array());
-        out.write(factChunk.array());
-        out.write(DATA_ID);
-        out.write(dataContentBytes);
-        if (data.isDirect()) {
-            ByteBuffer dataView = data.rewind().asReadOnlyBuffer();
-            while (dataView.hasRemaining()) {
-                out.write(dataView.get());
-            }
-        } else {
-            out.write(data.array());
+        dumpChunk(dataOut, fmtChunk,  FMT_ID);
+        if (factChunk.limit() > 0) {
+            dumpChunk(dataOut, factChunk, FACT_ID);
         }
+        dumpChunk(dataOut, data, DATA_ID);
+
+        // append padding bytes, if needed
         for (int i=0; i<dataPadding; i++) {
             out.write(0);
         }
@@ -297,6 +291,28 @@ public final class WAVFile {
 
     private int samplesPerBlock() {
         return union;
+    }
+
+    private static void dumpChunk(DataOutputStream out, ByteBuffer chunkData, int chunkId) throws IOException {
+        out.writeInt(Integer.reverseBytes(chunkId));
+        out.writeInt(Integer.reverseBytes(chunkData.limit()));
+        if (chunkData.isDirect()) {
+            ByteBuffer dataView = chunkData.rewind().asReadOnlyBuffer();
+            byte[] elements = new byte[512];
+
+            while (dataView.remaining() >= elements.length) {
+                dataView.get(elements).position(dataView.position() + elements.length);
+                out.write(elements);
+            }
+
+            if (dataView.hasRemaining()) {
+                elements = new byte[dataView.remaining()];
+                dataView.get(elements);
+                out.write(elements);
+            }
+        } else {
+            out.write(chunkData.array(), 0, chunkData.limit());
+        }
     }
 
     private static void requireChunk(ByteBuffer fmtChunk, int riffId) throws IOException {
@@ -321,6 +337,10 @@ public final class WAVFile {
         riffChunk.position(offset + chunkSize);
 
         return copy.rewind();
+    }
+
+    private static int chunkSize(ByteBuffer chunkData) {
+        return chunkData.limit() + 8;
     }
 
     private static void skipChunk(ByteBuffer riffChunk, int chunkSize) {
@@ -409,41 +429,46 @@ public final class WAVFile {
             throw new IOException("malformed WAV file: no samples");
         }
 
+        final int channels    = dst.numChannels;
+        final int format      = dst.format;
+        final int blockAlign  = dst.blockAlign;
+        int       factSamples = dst.factSamples;
+
         // determine number of samples & validate
         // =============================================================================================================
-        if (dst.format == WAVE_FORMAT_PCM) {
+        if (format == WAVE_FORMAT_PCM) {
             if (chunkSize % dst.blockAlign != 0) {
                 throw new IOException("malformed WAV file; data chunk size is not a multiple of block alignment");
             }
 
-            dst.numSamples = chunkSize / dst.blockAlign;
+            dst.numSamples = chunkSize / blockAlign;
         } else {
-            int q = chunkSize / dst.blockAlign;
-            int r = chunkSize % dst.blockAlign;
+            int q = chunkSize / blockAlign;
+            int r = chunkSize % blockAlign;
 
             int lastBlockSamples;
 
             dst.numSamples = q * dst.samplesPerBlock();
 
             if (r!=0) {
-                if (r % (dst.numChannels*4) != 0) {
+                if (r % (channels*4) != 0) {
                     throw new IOException("malformed WAV file");
                 }
 
-                lastBlockSamples = (r - (dst.numChannels*4)) * (dst.numChannels^3)+1;
+                lastBlockSamples = (r - (channels*4)) * (channels^3)+1;
                 dst.numSamples += lastBlockSamples;
             } else {
                 lastBlockSamples = dst.samplesPerBlock();
             }
 
-            if (dst.factSamples!=0) {
-                if (dst.factSamples < dst.numSamples && dst.factSamples > dst.numSamples - lastBlockSamples) {
-                    dst.numSamples = dst.factSamples;
+            if (factSamples!=0) {
+                if (factSamples < dst.numSamples && factSamples > dst.numSamples - lastBlockSamples) {
+                    dst.numSamples = factSamples;
                 } else if (
-                        dst.numChannels == 2 && (dst.factSamples >>= 1) < dst.numSamples
-                    && dst.factSamples > dst.numSamples - lastBlockSamples
+                    channels == 2 && (factSamples >>= 1) < dst.numSamples
+                    && factSamples > dst.numSamples - lastBlockSamples
                 ) {
-                    dst.numSamples = dst.factSamples;
+                    dst.numSamples = factSamples;
                 }
             }
         }
@@ -456,15 +481,9 @@ public final class WAVFile {
         // =============================================================================================================
         // read data
         byte[] dataBytes = new byte[chunkSize];
-        ByteBuffer data = ByteBuffer.wrap(dataBytes);
-        if (dst.realBitsPerSample==16) {
-            int count = dataBytes.length/2;
-            for (int i=0; i<count; i++) {
-                data.putShort(in.getShort());
-            }
-        } else {
-            in.get(dataBytes);
-        }
+        ByteBuffer data = ByteBuffer.wrap(dataBytes).order(ByteOrder.LITTLE_ENDIAN);
+        in.get(dataBytes);
+
         // there might be a padding byte if chunkSize is odd
         if ((chunkSize%2)!=0) {
             in.get();
