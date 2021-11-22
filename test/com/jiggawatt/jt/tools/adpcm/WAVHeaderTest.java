@@ -2,14 +2,13 @@ package com.jiggawatt.jt.tools.adpcm;
 
 import com.jiggawatt.jt.tools.adpcm.data.TestUtils;
 import com.jiggawatt.jt.tools.adpcm.util.WAVFile;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-import static org.junit.Assert.assertEquals;
-
 import static com.jiggawatt.jt.tools.adpcm.util.WAVFile.Format.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class WAVHeaderTest {
 

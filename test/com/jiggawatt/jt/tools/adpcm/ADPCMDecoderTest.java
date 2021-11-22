@@ -2,14 +2,14 @@ package com.jiggawatt.jt.tools.adpcm;
 
 import com.jiggawatt.jt.tools.adpcm.data.TestUtils;
 import com.jiggawatt.jt.tools.adpcm.util.WAVFile;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class ADPCMDecoderTest {
 
