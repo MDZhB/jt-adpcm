@@ -42,7 +42,7 @@ public final class ADPCMEncoderConfig {
          * @return this builder
          */
         public Builder setChannels(int count) {
-            if (channels!=1 && channels!=2) {
+            if (count!=1 && count!=2) {
                 throw new IllegalArgumentException("unsupported channel count: "+count+"; mono (1) or stereo (2) expected");
             }
 
