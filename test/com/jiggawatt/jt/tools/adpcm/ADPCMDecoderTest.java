@@ -78,7 +78,7 @@ public class ADPCMDecoderTest {
         ADPCMDecoderConfig cfg =
             ADPCMDecoder.configure()
             .setChannels  (channels)
-            //.setBlockSize (inputWav.getBlockAlign())
+            .setBlockSize (inputWav.getBlockSize())
             .setSampleRate(sampleRate)
             .end();
 

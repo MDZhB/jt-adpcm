@@ -24,7 +24,7 @@ import static com.jiggawatt.jt.tools.adpcm.impl.RIFFUtil.*;
 /**
  * This class provides WAV file input and output functionality for use with the ADPCM codec. Use the
  * {@link #fromADPCMBuffer(ByteBuffer, int, ADPCMEncoderConfig)} family of methods to create an instance from encoder
- * output, or the {@link #fromStream(InputStream)} method to obtain input data for either the encoder or the decoder.
+ * output, or the {@link #fromFile(Path)} method to obtain codec input from disk.
  * To write the file to a stream, use {@link #dump(OutputStream)}.
  *
  * @author Nikita Leonidov
