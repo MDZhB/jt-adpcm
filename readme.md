@@ -51,3 +51,55 @@ ShortBuffer decodeADPCM(ByteBuffer adpcmInput, int channels, int samples, int sa
     return new ADPCMDecoder(cfg).decode(adpcmInput, pcmOutput).rewind();
 }
 ```
+### File IO
+To read and write WAV files, use the `WAVFile` class. The following example illustrates how you might read a PCM file and write an ADPCM-encoded one using IO streams.
+```java
+void encode(boolean shape, InputStream in, OutputStream out) throws IOException {
+    // use one of the `WAVFile` factory methods to obtain an instance
+    WAVFile     wavInput = WAVFile.fromStream(in);
+    // `WAVFile.getReadOnlyData()` provides you with a read-only view of the audio data stored in the file
+    ShortBuffer pcmInput = wavInput.getReadOnlyData().asShortBuffer();
+
+    // the input `WAVFile` gives us some of the information we need to configure the encoder
+    ADPCMEncoderConfig cfg =
+        ADPCMEncoder.configure()
+        .setChannels    (wavInput.getChannels())
+        .setSampleRate  (wavInput.getSampleRate())
+        .setNoiseShaping(shape)
+        .setBlockSize   (ADPCMDecoderConfig.AUTO_BLOCK_SIZE)
+        .end();
+
+    ByteBuffer adpcmOutput = ByteBuffer.allocate(cfg.computeOutputSize(pcmInput));
+
+    // this convenience method generates WAV header info from your encoder configuration
+    WAVFile wavOutput = WAVFile.fromADPCMBuffer(adpcmOutput, wavInput.getNumSamples(), cfg);
+
+    // finally, WAVFile.dump() writes the file to the given stream 
+    wavOutput.dump(out);
+}
+```
+Dumping a decoded file works similarly.
+```java
+void decode(boolean shape, InputStream in, OutputStream out) throws IOException {
+    WAVFile    wavInput   = WAVFile.fromStream(in);
+    ByteBuffer adpcmInput = wavInput.getReadOnlyData();
+
+    // the input `WAVFile` gives us the information we need to configure the decoder
+    ADPCMDecoderConfig cfg =
+    ADPCMDecoder.configure()
+        .setChannels  (wavInput.getChannels())
+        .setSampleRate(wavInput.getSampleRate())
+        .setBlockSize (wavInput.getBlockSize())
+        .end();
+
+    ByteBuffer pcmOutput = ByteBuffer.allocate(wavInput.getNumSamples() * wavInput.getChannels() * 2);
+    new ADPCMDecoder(cfg).decode(adpcmInput, pcmOutput.asShortBuffer());
+
+    // this convenience method generates WAV header info from your encoder configuration
+    WAVFile wavOutput = WAVFile.fromPCMBuffer(pcmOutput, wavInput.getChannels(), wavInput.getSampleRate());
+
+    // finally, WAVFile.dump() writes the file to the given stream 
+    wavOutput.dump(out);
+}
+```
+

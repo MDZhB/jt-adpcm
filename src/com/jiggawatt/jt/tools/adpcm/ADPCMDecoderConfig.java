@@ -1,5 +1,7 @@
 package com.jiggawatt.jt.tools.adpcm;
 
+import com.jiggawatt.jt.tools.adpcm.impl.ADPCMUtil;
+
 /**
  * Configuration object for {@link ADPCMDecoder}. Acquire an instance using {@link ADPCMDecoder#configure()}.
  * @author Nikita Leonidov
@@ -85,9 +87,9 @@ public final class ADPCMDecoderConfig {
             ADPCMDecoderConfig ret = new ADPCMDecoderConfig();
 
             ret.channels        = channels;
-            ret.blockSize       = blockSize == AUTO_BLOCK_SIZE ? computeBlockSize(channels, sampleRate) : blockSize;
+            ret.blockSize       = blockSize == AUTO_BLOCK_SIZE ? ADPCMUtil.computeBlockSize(channels, sampleRate) : blockSize;
             ret.sampleRate      = sampleRate;
-            ret.samplesPerBlock = computeSamplesPerBlock(channels, ret.blockSize);
+            ret.samplesPerBlock = ADPCMUtil.computeSamplesPerBlock(channels, ret.blockSize);
 
             return ret;
         }
@@ -129,14 +131,6 @@ public final class ADPCMDecoderConfig {
     }
 
     public int getBytesPerSecond() {
-        return sampleRate * blockSize / samplesPerBlock;
-    }
-
-    private static int computeSamplesPerBlock(int numChannels, int blockSize) {
-        return (blockSize - numChannels * 4) * (numChannels ^ 3) + 1;
-    }
-
-    private static int computeBlockSize(int channels, int sampleRate) {
-        return 256 * channels * (sampleRate < 11000 ? 1 : sampleRate / 11000);
+        return ADPCMUtil.computeBytesPerSecond(sampleRate, blockSize, samplesPerBlock);
     }
 }

@@ -1,6 +1,7 @@
 package com.jiggawatt.jt.tools.adpcm;
 
-import com.jiggawatt.jt.tools.adpcm.data.WAVFile;
+import com.jiggawatt.jt.tools.adpcm.data.TestUtils;
+import com.jiggawatt.jt.tools.adpcm.util.WAVFile;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -12,8 +13,8 @@ import static org.junit.Assert.assertFalse;
 
 public class ADPCMDecoderTest {
 
-    // encoding with dynamic noise shaping
-    //==================================================================================================================
+    // decoding with dynamic noise shaping
+    // =================================================================================================================
     @Test
     public void decode_16bit_44100Hz_stereo() throws IOException {
         doTest(16, 44100, 2, true);
@@ -33,9 +34,21 @@ public class ADPCMDecoderTest {
     public void decode_16bit_8000Hz_mono() throws IOException {
         doTest(16, 8000, 1, true);
     }
+    
+    // decoding with static noise shaping
+    // =================================================================================================================
+    @Test
+    public void decode_16bit_88200Hz_mono() throws IOException {
+        doTest(16, 88200, 1, true);
+    }
 
-    // encoding without dynamic noise shaping
-    //==================================================================================================================
+    @Test
+    public void decode_16bit_88200Hz_stereo() throws IOException {
+        doTest(16, 88200, 2, true);
+    }
+
+    // decoding without noise shaping
+    // =================================================================================================================
     @Test
     public void decode_16bit_44100Hz_stereo_flat() throws IOException {
         doTest(16, 44100, 2, false);
@@ -58,14 +71,14 @@ public class ADPCMDecoderTest {
 
     private void doTest(int bits, int sampleRate, int channels, boolean shape) throws IOException {
         // load test data
-        //--------------------------------------------------------------------------------------------------------------
-        WAVFile inputWav  = new WAVFile("adpcm_"+name(bits, sampleRate, channels, !shape));
-        WAVFile expectWav = new WAVFile("dec_"  +name(bits, sampleRate, channels, !shape));
+        // -------------------------------------------------------------------------------------------------------------
+        WAVFile inputWav  = TestUtils.getClasspathWav("adpcm_"+name(bits, sampleRate, channels, !shape));
+        WAVFile expectWav = TestUtils.getClasspathWav("dec_"  +name(bits, sampleRate, channels, !shape));
 
         ADPCMDecoderConfig cfg =
             ADPCMDecoder.configure()
             .setChannels  (channels)
-            //.setBlockSize (inputWav.getBlockAlign())
+            .setBlockSize (inputWav.getBlockSize())
             .setSampleRate(sampleRate)
             .end();
 
@@ -73,18 +86,18 @@ public class ADPCMDecoderTest {
         ShortBuffer expect = expectWav.getReadOnlyData().asShortBuffer();
 
         // decode
-        //--------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------
         ShortBuffer actual =
             new ADPCMDecoder(cfg)
             .decode(
                 input,
-                ByteBuffer.allocate(inputWav.getNumSamples() * inputWav.getNumChannels() * 2)
+                ByteBuffer.allocate(inputWav.getNumSamples() * inputWav.getChannels() * 2)
                 .asShortBuffer()
             )
             .rewind();
 
         // test decoded data
-        //--------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------
         while (expect.hasRemaining()) {
             assertEquals(expect.get(), actual.get());
         }
