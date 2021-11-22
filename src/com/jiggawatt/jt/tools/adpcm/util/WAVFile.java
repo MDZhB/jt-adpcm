@@ -1,5 +1,8 @@
 package com.jiggawatt.jt.tools.adpcm.util;
 
+import com.jiggawatt.jt.tools.adpcm.ADPCMDecoder;
+import com.jiggawatt.jt.tools.adpcm.ADPCMDecoderConfig;
+import com.jiggawatt.jt.tools.adpcm.ADPCMEncoder;
 import com.jiggawatt.jt.tools.adpcm.ADPCMEncoderConfig;
 import com.jiggawatt.jt.tools.adpcm.impl.ADPCMUtil;
 
@@ -9,6 +12,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.ShortBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,6 +21,15 @@ import java.util.Objects;
 
 import static com.jiggawatt.jt.tools.adpcm.impl.RIFFUtil.*;
 
+/**
+ * This class provides WAV file input and output functionality for use with the ADPCM codec. Use the
+ * {@link #fromADPCMBuffer(ByteBuffer, int, ADPCMEncoderConfig)} family of methods to create an instance from encoder
+ * output, or the {@link #fromStream(InputStream)} method to obtain input data for either the encoder or the decoder.
+ * To write the file to a stream, use {@link #dump(OutputStream)}.
+ *
+ * @author Nikita Leonidov
+ * @since  1.1.0
+ */
 public final class WAVFile {
 
     private static final int RIFF_ID = chunkId("RIFF");
@@ -55,10 +68,26 @@ public final class WAVFile {
 
     private ByteBuffer data;
 
+    /**
+     * Creates a new {@link WAVFile} instance from the given ADPCM-encoded buffer.
+     * @param encodedData  the ADPCM-encoded audio
+     * @param numSamples   the number of samples in {@code encodedData}
+     * @param cfg          the encoder configuration with which {@code encodedData} was generated
+     * @return a {@code WAVFile} with the given contents
+     */
     public static WAVFile fromADPCMBuffer(ByteBuffer encodedData, int numSamples, ADPCMEncoderConfig cfg) {
         return fromADPCMBuffer(encodedData, numSamples, cfg.getChannels(), cfg.getSampleRate(), cfg.getBlockSize());
     }
 
+    /**
+     * Creates a new {@link WAVFile} instance from the given ADPCM-encoded buffer.
+     * @param encodedData  the ADPCM-encoded audio
+     * @param numSamples   the number of samples stored in the input buffer
+     * @param channels     the number of channels stored in the input buffer
+     * @param sampleRate   the sample rate of the input data in Hz
+     * @param blockSize    the ADPCM block size for the input data
+     * @return a {@code WAVFile} with the given contents
+     */
     public static WAVFile fromADPCMBuffer(
             ByteBuffer encodedData,
             int numSamples,
@@ -92,6 +121,13 @@ public final class WAVFile {
         return dst;
     }
 
+    /**
+     * Creates a new {@link WAVFile} instance from the given PCM audio data.
+     * @param pcmData     the PCM audio to store
+     * @param channels    the number of samples in {@code pcmData}
+     * @param sampleRate  the sample rate of the input sound in Hz
+     * @return a {@code WAVFile} with the given contents
+     */
     public static WAVFile fromPCMBuffer(ByteBuffer pcmData, int channels, int sampleRate) {
         WAVFile dst = new WAVFile();
 
@@ -123,16 +159,31 @@ public final class WAVFile {
         return dst;
     }
 
+    /**
+     * Reads the file at the given path and produces a {@link WAVFile} with its contents.
+     * @param filePath  the path to the input file as a string
+     * @return a {@code WAVFile} with the given contents
+     */
     public static WAVFile fromFile(String filePath) throws IOException {
         return WAVFile.fromFile(Paths.get(filePath));
     }
 
+    /**
+     * Reads the file at the given path and produces a {@link WAVFile} with its contents.
+     * @param filePath  the path to the input file
+     * @return a {@code WAVFile} with the given contents
+     */
     public static WAVFile fromFile(Path filePath) throws IOException {
         try (InputStream in = Files.newInputStream(filePath)) {
             return WAVFile.fromStream(in);
         }
     }
 
+    /**
+     * Creates a {@link WAVFile} from the contents of the given stream.
+     * @param in  the stream from which to read the input WAV file
+     * @return a {@code WAVFile} with the given contents
+     */
     public static WAVFile fromStream(InputStream in) throws IOException {
         WAVFile dst = new WAVFile();
 
@@ -195,6 +246,9 @@ public final class WAVFile {
         return numChannels;
     }
 
+    /**
+     * @return this file's sample rate in Hz
+     */
     public int getSampleRate() {
         return sampleRate;
     }
@@ -211,14 +265,30 @@ public final class WAVFile {
         return numSamples;
     }
 
+    /**
+     * The number of bytes in a block if this is an ADPCM-encoded file, or the total number of bytes in a sample if this
+     * is a PCM file. Use this as the input to {@link ADPCMDecoderConfig.Builder#setBlockSize(int)}.
+     * @return ADPCM block size, or the number of bytes in an audio sample
+     */
     public int getBlockSize() {
         return blockAlign;
     }
 
+    /**
+     * Produces a read-only view of this file's audio data. Pass this to
+     * {@link ADPCMDecoder#decode(ByteBuffer, ShortBuffer)} or as a {@link ShortBuffer} to
+     * {@link ADPCMEncoder#encode(ShortBuffer, ByteBuffer)}.
+     * @return a read-only copy of this file's audio data
+     */
     public ByteBuffer getReadOnlyData() {
         return data.asReadOnlyBuffer().order(data.order()).rewind();
     }
 
+    /**
+     * Writes the contents of this object to the given output stream as a WAV file.
+     * @param out  output stream for the file
+     * @throws IOException  if an IO problem occurs
+     */
     public void dump(OutputStream out) throws IOException {
         DataOutputStream dataOut = new DataOutputStream(out);
 
