@@ -107,8 +107,8 @@ public final class ADPCMEncoder {
             int numBytes = encodeBlock(ctx, adpcmBlock, pcmBlock, blockAdpcmSamples);
             if (numBytes != currentBlockSize) {
                 throw new ADPCMEncodingException(
-                        "unexpected number of bytes encoded; " +
-                        "expected "+currentBlockSize+", found "+numBytes
+                    "unexpected number of bytes encoded; " +
+                    "expected "+currentBlockSize+", found "+numBytes
                 );
             }
 

@@ -37,13 +37,13 @@ public final class WAVFile {
         ByteBuffer in = readFile(name).order(ByteOrder.LITTLE_ENDIAN);
 
         // read RIFF header
-        //--------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------
         requireId(in, RIFF_ID);
         final int riffSize = in.getInt();
         requireId(in, WAVE_ID);
 
         // loop through header elements until we reach the data chunk
-        //--------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------
         WaveHeader waveHeader = null;
 
         while (in.hasRemaining()) {

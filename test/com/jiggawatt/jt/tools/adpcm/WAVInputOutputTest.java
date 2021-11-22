@@ -79,6 +79,24 @@ public class WAVInputOutputTest {
     }
 
     @Test
+    public void generatesPlayableAdpcmWav() throws IOException {
+        if (!inputFileName.startsWith("adpcm")) {
+            return;
+        }
+
+        WAVFile adpcmFileExpect = TestUtils.getClasspathWav(inputFileName);
+        WAVFile adpcmFileActual = WAVFile.fromADPCMBuffer(
+            adpcmFileExpect.getReadOnlyData(),
+            adpcmFileExpect.getNumSamples(),
+            adpcmFileExpect.getChannels(),
+            adpcmFileExpect.getSampleRate(),
+            adpcmFileExpect.getBlockSize()
+        );
+
+        assertEquals(adpcmFileExpect, adpcmFileActual);
+    }
+
+    @Test
     public void generatesPlayablePcmWav() throws IOException {
         if (!inputFileName.startsWith("pcm")) {
             return;
