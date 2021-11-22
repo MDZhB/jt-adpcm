@@ -1,5 +1,7 @@
 package com.jiggawatt.jt.tools.adpcm;
 
+import com.jiggawatt.jt.tools.adpcm.impl.ADPCMUtil;
+
 final class ADPCMContext {
 
     static final class Channel {
@@ -44,7 +46,7 @@ final class ADPCMContext {
 
         for (int ch=0; ch < numChannels; ch++) {
             for (byte i=0; i<=88; i++) {
-                if (i==88 || initialDeltas[ch] < (ADPCM.stepTable(i) + ADPCM.stepTable(i+1))/2) {
+                if (i==88 || initialDeltas[ch] < (ADPCMUtil.stepTable(i) + ADPCMUtil.stepTable(i+1))/2) {
                     channels[ch].index = i;
                     break;
                 }
