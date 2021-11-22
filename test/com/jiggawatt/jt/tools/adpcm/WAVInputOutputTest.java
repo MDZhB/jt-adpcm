@@ -10,8 +10,10 @@ import org.junit.runners.Parameterized.Parameters;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
 public class WAVInputOutputTest {
@@ -38,8 +40,6 @@ public class WAVInputOutputTest {
 
     @Test
     public void loadedFileIdenticalWhenDumped() throws IOException {
-        new com.jiggawatt.jt.tools.adpcm.data.WAVFile(inputFileName);
-
         WAVFile file = TestUtils.getClasspathWav(inputFileName);
         final byte[] dumped;
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
@@ -53,5 +53,40 @@ public class WAVInputOutputTest {
         }
 
         assertArrayEquals(original, dumped);
+    }
+
+    @Test
+    public void generatesPlayableAdpcmWavWithEncoder() throws IOException {
+        if (!inputFileName.startsWith("pcm")) {
+            return;
+        }
+
+        WAVFile pcmFile = TestUtils.getClasspathWav(inputFileName);
+
+        ADPCMEncoderConfig cfg = ADPCMEncoder.configure()
+            .setChannels  (pcmFile.getChannels())
+            .setSampleRate(pcmFile.getSampleRate())
+            .setBlockSize (ADPCMEncoderConfig.AUTO_BLOCK_SIZE)
+            .end();
+
+        ByteBuffer adpcmOutput = ByteBuffer.allocate(cfg.computeOutputSize(pcmFile.getNumSamples()));
+        new ADPCMEncoder(cfg).encode(pcmFile.getReadOnlyData().asShortBuffer(), adpcmOutput);
+
+        WAVFile adpcmFileActual = WAVFile.fromADPCMBuffer(adpcmOutput.rewind(), pcmFile.getNumSamples(), cfg);
+        WAVFile adpcmFileExpect = TestUtils.getClasspathWav("ad"+inputFileName);
+
+        assertEquals(adpcmFileExpect, adpcmFileActual);
+    }
+
+    @Test
+    public void generatesPlayablePcmWav() throws IOException {
+        if (!inputFileName.startsWith("pcm")) {
+            return;
+        }
+
+        WAVFile pcmFileExpect = TestUtils.getClasspathWav(inputFileName);
+        WAVFile pcmFileActual = WAVFile.fromPCMBuffer(pcmFileExpect.getReadOnlyData(), pcmFileExpect.getChannels(), pcmFileExpect.getSampleRate());
+
+        assertEquals(pcmFileExpect, pcmFileActual);
     }
 }

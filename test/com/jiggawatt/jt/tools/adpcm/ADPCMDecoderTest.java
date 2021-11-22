@@ -79,7 +79,7 @@ public class ADPCMDecoderTest {
             new ADPCMDecoder(cfg)
             .decode(
                 input,
-                ByteBuffer.allocate(inputWav.getNumSamples() * inputWav.getNumChannels() * 2)
+                ByteBuffer.allocate(inputWav.getNumSamples() * inputWav.getChannels() * 2)
                 .asShortBuffer()
             )
             .rewind();

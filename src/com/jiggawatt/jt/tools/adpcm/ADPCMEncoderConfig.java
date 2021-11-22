@@ -1,5 +1,7 @@
 package com.jiggawatt.jt.tools.adpcm;
 
+import com.jiggawatt.jt.tools.adpcm.impl.ADPCMUtil;
+
 import java.nio.ShortBuffer;
 
 /**
@@ -104,9 +106,9 @@ public final class ADPCMEncoderConfig {
             ret.channels     = channels;
             ret.sampleRate   = sampleRate;
             ret.noiseShaping = noiseShaping;
-            ret.blockSize    = blockSize == AUTO_BLOCK_SIZE ? computeBlockSize(channels, sampleRate) : blockSize;
+            ret.blockSize    = blockSize == AUTO_BLOCK_SIZE ? ADPCMUtil.computeBlockSize(channels, sampleRate) : blockSize;
 
-            ret.samplesPerBlock = computeSamplesPerBlock(channels, ret.blockSize);
+            ret.samplesPerBlock = ADPCMUtil.computeSamplesPerBlock(channels, ret.blockSize);
 
             return ret;
         }
@@ -156,7 +158,7 @@ public final class ADPCMEncoderConfig {
     }
 
     public int getBytesPerSecond() {
-        return sampleRate * blockSize / samplesPerBlock;
+        return ADPCMUtil.computeBytesPerSecond(sampleRate, blockSize, samplesPerBlock);
     }
 
     /**
@@ -165,7 +167,7 @@ public final class ADPCMEncoderConfig {
      * @return the number of bytes required to store the input with ADPCM encoding
      */
     public int computeOutputSize(ShortBuffer in) {
-        return computeOutputSize(in.capacity()/channels, channels, samplesPerBlock, blockSize);
+        return ADPCMUtil.computeOutputSize(in.capacity()/channels, channels, samplesPerBlock, blockSize);
     }
 
     /**
@@ -174,32 +176,10 @@ public final class ADPCMEncoderConfig {
      * @return the number of bytes required to store an input of the given length with ADPCM encoding
      */
     public int computeOutputSize(int numSamples) {
-        int blockSize       = computeBlockSize(channels, sampleRate);
-        int samplesPerBlock = computeSamplesPerBlock(channels, blockSize);
+        int blockSize       = ADPCMUtil.computeBlockSize(channels, sampleRate);
+        int samplesPerBlock = ADPCMUtil.computeSamplesPerBlock(channels, blockSize);
 
-        return computeOutputSize(numSamples, channels, samplesPerBlock, blockSize);
-    }
-
-    private static int computeOutputSize(int numSamples, int numChannels, int samplesPerBlock, int blockSize) {
-        final int q = numSamples / samplesPerBlock;
-        final int r = numSamples % samplesPerBlock;
-
-        int ret = q * blockSize;
-
-        if (r!=0) {
-            int lastAdpcmBlockSamples = ((r + 6) & ~7) + 1;
-            ret += (lastAdpcmBlockSamples - 1) / (numChannels ^ 3) + (numChannels * 4);
-        }
-
-        return ret;
-    }
-
-    private static int computeSamplesPerBlock(int numChannels, int blockSize) {
-        return (blockSize - numChannels * 4) * (numChannels ^ 3) + 1;
-    }
-
-    private static int computeBlockSize(int channels, int sampleRate) {
-        return 256 * channels * (sampleRate < 11000 ? 1 : sampleRate / 11000);
+        return ADPCMUtil.computeOutputSize(numSamples, channels, samplesPerBlock, blockSize);
     }
 
 }

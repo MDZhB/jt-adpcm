@@ -35,7 +35,7 @@ public class ADPCMEncoderTest {
         doTest(16, 8000, 1, true);
     }
 
-    // encoding without dynamic noise shaping
+    // encoding without noise shaping
     //==================================================================================================================
     @Test
     public void encode_16bit_44100Hz_stereo_flat() throws IOException {

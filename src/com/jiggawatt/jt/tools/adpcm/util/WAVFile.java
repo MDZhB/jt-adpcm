@@ -1,6 +1,7 @@
 package com.jiggawatt.jt.tools.adpcm.util;
 
 import com.jiggawatt.jt.tools.adpcm.ADPCMEncoderConfig;
+import com.jiggawatt.jt.tools.adpcm.impl.ADPCMUtil;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -12,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 import static com.jiggawatt.jt.tools.adpcm.impl.RIFFUtil.*;
 
@@ -53,46 +55,51 @@ public final class WAVFile {
 
     private ByteBuffer data;
 
-    // values for wave channel mask; see ksmedia.h from windows sdk
-    private static final int SPEAKER_FRONT_LEFT     = 0x1;
-    private static final int SPEAKER_FRONT_RIGHT    = 0x2;
-    private static final int SPEAKER_FRONT_CENTER   = 0x4;
-    private static final int KSAUDIO_SPEAKER_MONO   = SPEAKER_FRONT_CENTER;
-    private static final int KSAUDIO_SPEAKER_STEREO = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT;
-
     public static WAVFile fromADPCMBuffer(ByteBuffer encodedData, int numSamples, ADPCMEncoderConfig cfg) {
+        return fromADPCMBuffer(encodedData, numSamples, cfg.getChannels(), cfg.getSampleRate(), cfg.getBlockSize());
+    }
+
+    public static WAVFile fromADPCMBuffer(
+            ByteBuffer encodedData,
+            int numSamples,
+            int channels,
+            int sampleRate,
+            int blockSize
+    ) {
+        final int samplesPerBlock = ADPCMUtil.computeSamplesPerBlock(channels, blockSize);
+
         WAVFile dst = new WAVFile();
 
         dst.factSamples       = numSamples;
         dst.format            = WAVE_FORMAT_IMA_ADPCM;
         dst.numSamples        = numSamples;
-        dst.realBitsPerSample = 16;
+        dst.realBitsPerSample = 4;
 
-        dst.formatTag        = WAVE_FORMAT_EXTENSIBLE;
-        dst.numChannels      = cfg.getChannels();
-        dst.sampleRate       = cfg.getSampleRate();
-        dst.bytesPerSecond   = cfg.getBytesPerSecond();
-        dst.blockAlign       = cfg.getBlockSize();
+        dst.formatTag        = WAVE_FORMAT_IMA_ADPCM;
+        dst.numChannels      = channels;
+        dst.sampleRate       = sampleRate;
+        dst.bytesPerSecond   = ADPCMUtil.computeBytesPerSecond(sampleRate, blockSize, samplesPerBlock);
+        dst.blockAlign       = blockSize;
         dst.rawBitsPerSample = 4;
         dst.cbSize           = 2;
-        dst.union            = cfg.getSamplesPerBlock();
-        dst.channelMask      = cfg.getChannels() == 2? KSAUDIO_SPEAKER_STEREO : KSAUDIO_SPEAKER_MONO;
-        dst.subFormat        = WAVE_FORMAT_IMA_ADPCM;
-        dst.GUID             = new String(new byte[14]); // empty!
+        dst.union            = samplesPerBlock;
+        dst.channelMask      = 0;
+        dst.subFormat        = 0;
+        dst.GUID             = new String(new byte[14]);
 
-        dst.data = encodedData.asReadOnlyBuffer().duplicate().rewind();
+        dst.data = copyBuffer(encodedData);
 
         return dst;
     }
 
-    private static WAVFile fromPCMBuffer(ByteBuffer pcmData, int channels, int sampleRate) {
+    public static WAVFile fromPCMBuffer(ByteBuffer pcmData, int channels, int sampleRate) {
         WAVFile dst = new WAVFile();
 
         final int bytesPerSample = 2;
         final int bitsPerSample  = 16;
         final int numSamples     = pcmData.capacity() / (bytesPerSample * channels);
 
-        dst.factSamples       = numSamples;
+        dst.factSamples       = 0;
         dst.format            = WAVE_FORMAT_PCM;
         dst.numSamples        = numSamples;
         dst.realBitsPerSample = bitsPerSample;
@@ -109,9 +116,9 @@ public final class WAVFile {
         dst.union            = 0;
         dst.channelMask      = 0;
         dst.subFormat        = 0;
-        dst.GUID             = null;
+        dst.GUID             = new String(new byte[14]);
 
-        dst.data = pcmData.asReadOnlyBuffer().duplicate().rewind();
+        dst.data = copyBuffer(pcmData);
 
         return dst;
     }
@@ -184,7 +191,7 @@ public final class WAVFile {
         return dst;
     }
 
-    public int getNumChannels() {
+    public int getChannels() {
         return numChannels;
     }
 
@@ -285,6 +292,51 @@ public final class WAVFile {
         }
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof WAVFile)) return false;
+        WAVFile wavFile = (WAVFile) o;
+        return factSamples == wavFile.factSamples
+            && format == wavFile.format
+            && numSamples == wavFile.numSamples
+            && realBitsPerSample == wavFile.realBitsPerSample
+            && formatTag == wavFile.formatTag
+            && numChannels == wavFile.numChannels
+            && sampleRate == wavFile.sampleRate
+            && bytesPerSecond == wavFile.bytesPerSecond
+            && blockAlign == wavFile.blockAlign
+            && rawBitsPerSample == wavFile.rawBitsPerSample
+            && cbSize == wavFile.cbSize
+            && union == wavFile.union
+            && channelMask == wavFile.channelMask
+            && subFormat == wavFile.subFormat
+            && GUID.equals(wavFile.GUID)
+            && data.equals(wavFile.data);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+            factSamples,
+            format,
+            numSamples,
+            realBitsPerSample,
+            formatTag,
+            numChannels,
+            sampleRate,
+            bytesPerSecond,
+            blockAlign,
+            rawBitsPerSample,
+            cbSize,
+            union,
+            channelMask,
+            subFormat,
+            GUID,
+            data
+        );
+    }
+
     private WAVFile() {
         //
     }
@@ -296,12 +348,13 @@ public final class WAVFile {
     private static void dumpChunk(DataOutputStream out, ByteBuffer chunkData, int chunkId) throws IOException {
         out.writeInt(Integer.reverseBytes(chunkId));
         out.writeInt(Integer.reverseBytes(chunkData.limit()));
-        if (chunkData.isDirect()) {
+        if (chunkData.isDirect() || chunkData.isReadOnly()) {
             ByteBuffer dataView = chunkData.rewind().asReadOnlyBuffer();
             byte[] elements = new byte[512];
 
             while (dataView.remaining() >= elements.length) {
-                dataView.get(elements).position(dataView.position() + elements.length);
+                final int nextPosition = dataView.position() + elements.length;
+                dataView.get(elements).position(Math.min(dataView.limit(), nextPosition));
                 out.write(elements);
             }
 
@@ -490,5 +543,28 @@ public final class WAVFile {
         }
 
         dst.data = data;
+    }
+
+    private static ByteBuffer copyBuffer(ByteBuffer src) {
+        final int initialPosition = src.position();
+
+        ByteBuffer copy     = ByteBuffer.allocate(src.remaining());
+        byte[]     elements = new byte[256];
+
+        while (src.remaining() >= elements.length) {
+            final int nextPosition = src.position() + elements.length;
+            src.get(elements).position(Math.min(src.limit(), nextPosition));
+            copy.put(elements);
+        }
+
+        if (src.hasRemaining()) {
+            elements = new byte[src.remaining()];
+            src.get(elements);
+            copy.put(elements);
+        }
+
+        src.position(initialPosition);
+
+        return copy.rewind();
     }
 }

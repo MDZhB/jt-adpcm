@@ -18,7 +18,7 @@ public class WAVHeaderTest {
         try (InputStream in = TestUtils.openClasspathStream("pcm_16bit_8000Hz_mono.wav")) {
             WAVFile file = WAVFile.fromStream(in);
 
-            assertEquals(1,     file.getNumChannels());
+            assertEquals(1,     file.getChannels());
             assertEquals(8000,  file.getSampleRate());
             assertEquals(16,    file.getBitsPerSample());
             assertEquals(PCM,   file.getFormat());
@@ -32,7 +32,7 @@ public class WAVHeaderTest {
         try (InputStream in = TestUtils.openClasspathStream("pcm_16bit_8000Hz_stereo.wav")) {
             WAVFile file = WAVFile.fromStream(in);
 
-            assertEquals(2,     file.getNumChannels());
+            assertEquals(2,     file.getChannels());
             assertEquals(8000,  file.getSampleRate());
             assertEquals(16,    file.getBitsPerSample());
             assertEquals(PCM,   file.getFormat());
@@ -46,7 +46,7 @@ public class WAVHeaderTest {
         try (InputStream in = TestUtils.openClasspathStream("adpcm_16bit_8000Hz_mono.wav")) {
             WAVFile file = WAVFile.fromStream(in);
 
-            assertEquals(1,         file.getNumChannels());
+            assertEquals(1,         file.getChannels());
             assertEquals(8000,      file.getSampleRate());
             assertEquals(4,         file.getBitsPerSample());
             assertEquals(IMA_ADPCM, file.getFormat());
@@ -60,7 +60,7 @@ public class WAVHeaderTest {
         try (InputStream in = TestUtils.openClasspathStream("adpcm_16bit_8000Hz_stereo.wav")) {
             WAVFile file = WAVFile.fromStream(in);
 
-            assertEquals(2,         file.getNumChannels());
+            assertEquals(2,         file.getChannels());
             assertEquals(8000,      file.getSampleRate());
             assertEquals(4,         file.getBitsPerSample());
             assertEquals(IMA_ADPCM, file.getFormat());
