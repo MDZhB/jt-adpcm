@@ -2,45 +2,47 @@ package com.jiggawatt.jt.tools.adpcm;
 
 import com.jiggawatt.jt.tools.adpcm.data.TestUtils;
 import com.jiggawatt.jt.tools.adpcm.util.WAVFile;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@RunWith(Parameterized.class)
 public class WAVInputOutputTest {
 
-    private final String inputFileName;
-
-    @Parameters
-    public static String[] testFileNames() {
-        return new String[] {
-            "adpcm_16bit_8000Hz_mono.wav",
-            "adpcm_16bit_8000Hz_stereo.wav",
-            "adpcm_16bit_44100Hz_mono.wav",
-            "adpcm_16bit_44100Hz_stereo.wav",
+    public static List<String> pcmFileNames() {
+        return List.of(
             "pcm_16bit_8000Hz_mono.wav",
             "pcm_16bit_8000Hz_stereo.wav",
             "pcm_16bit_44100Hz_mono.wav",
-            "pcm_16bit_44100Hz_stereo.wav",
-        };
+            "pcm_16bit_44100Hz_stereo.wav"
+        );
     }
 
-    public WAVInputOutputTest(String inputFileName) {
-        this.inputFileName = inputFileName;
+    public static List<String> adpcmFileNames() {
+        return List.of(
+            "adpcm_16bit_8000Hz_mono.wav",
+            "adpcm_16bit_8000Hz_stereo.wav",
+            "adpcm_16bit_44100Hz_mono.wav",
+            "adpcm_16bit_44100Hz_stereo.wav"
+        );
     }
 
-    @Test
-    public void loadedFileIdenticalWhenDumped() throws IOException {
+    public static List<String> allFileNames() {
+        return Stream.concat(pcmFileNames().stream(), adpcmFileNames().stream()).collect(Collectors.toList());
+    }
+
+    @ParameterizedTest
+    @MethodSource("allFileNames")
+    public void loadedFileIdenticalWhenDumped(String inputFileName) throws IOException {
         WAVFile file = TestUtils.getClasspathWav(inputFileName);
         final byte[] dumped;
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
@@ -56,12 +58,9 @@ public class WAVInputOutputTest {
         assertArrayEquals(original, dumped);
     }
 
-    @Test
-    public void generatesPlayableAdpcmWavWithEncoder() throws IOException {
-        if (!inputFileName.startsWith("pcm")) {
-            return;
-        }
-
+    @ParameterizedTest
+    @MethodSource("pcmFileNames")
+    public void generatesPlayableAdpcmWavWithEncoder(String inputFileName) throws IOException {
         WAVFile pcmFile = TestUtils.getClasspathWav(inputFileName);
 
         ADPCMEncoderConfig cfg = ADPCMEncoder.configure()
@@ -79,11 +78,9 @@ public class WAVInputOutputTest {
         assertEquals(adpcmFileExpect, adpcmFileActual);
     }
 
-    @Test
-    public void generatesPlayableAdpcmWav() throws IOException {
-        if (!inputFileName.startsWith("adpcm")) {
-            return;
-        }
+    @ParameterizedTest
+    @MethodSource("adpcmFileNames")
+    public void generatesPlayableAdpcmWav(String inputFileName) throws IOException {
 
         WAVFile adpcmFileExpect = TestUtils.getClasspathWav(inputFileName);
         WAVFile adpcmFileActual = WAVFile.fromADPCMBuffer(
@@ -97,8 +94,9 @@ public class WAVInputOutputTest {
         assertEquals(adpcmFileExpect, adpcmFileActual);
     }
 
-    @Test
-    public void generatesPlayablePcmWav() throws IOException {
+    @ParameterizedTest
+    @MethodSource("pcmFileNames")
+    public void generatesPlayablePcmWav(String inputFileName) throws IOException {
         if (!inputFileName.startsWith("pcm")) {
             return;
         }
