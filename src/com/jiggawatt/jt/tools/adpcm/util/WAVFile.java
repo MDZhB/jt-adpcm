@@ -42,8 +42,13 @@ public final class WAVFile {
     private static final int WAVE_FORMAT_IMA_ADPCM  = 0x11;
     private static final int WAVE_FORMAT_EXTENSIBLE = 0xfffe;
 
+    /**
+     * Supported audio coding formats.
+     */
     public enum Format {
+        /** Pulse code modulation (uncompressed). */
         PCM,
+        /** Adaptive differential pulse-code modulation (compressed). */
         IMA_ADPCM
     }
 
@@ -163,6 +168,7 @@ public final class WAVFile {
      * Reads the file at the given path and produces a {@link WAVFile} with its contents.
      * @param filePath  the path to the input file as a string
      * @return a {@code WAVFile} with the given contents
+     * @throws IOException if an I/O problem occurs
      */
     public static WAVFile fromFile(String filePath) throws IOException {
         return WAVFile.fromFile(Paths.get(filePath));
@@ -172,6 +178,7 @@ public final class WAVFile {
      * Reads the file at the given path and produces a {@link WAVFile} with its contents.
      * @param filePath  the path to the input file
      * @return a {@code WAVFile} with the given contents
+     * @throws IOException if an I/O problem occurs
      */
     public static WAVFile fromFile(Path filePath) throws IOException {
         try (InputStream in = Files.newInputStream(filePath)) {

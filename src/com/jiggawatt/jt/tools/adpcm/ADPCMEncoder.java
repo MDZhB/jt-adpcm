@@ -65,12 +65,13 @@ public final class ADPCMEncoder {
     }
 
     /**
-     * Encodes a block of PCM data to an ADPCM block.
+     * Encodes the PCM audio data stored in buffer {@code in} and stores the resulting ADPCM data in buffer {@code out}.
      * @param in   input buffer; contains 16-bit PCM data
      * @param out  output buffer for ADPCM data; capacity must be equal or greater than the value returned by {@link
      *             ADPCMEncoderConfig#getBlockSize()}
-     * @return <tt>out</tt>
-     * @throws IOException when an encoding problem occurs
+     * @return {@code out}
+     * @throws ADPCMEncodingException when an encoding problem occurs
+     * @throws IOException when an I/O problem occurs
      */
     public ByteBuffer encode(ShortBuffer in, ByteBuffer out) throws IOException {
         int currentBlockSize = blockSize;

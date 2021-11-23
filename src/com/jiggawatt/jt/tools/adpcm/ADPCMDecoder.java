@@ -56,11 +56,11 @@ public final class ADPCMDecoder {
     }
 
     /**
-     * Decodes <tt>out.{@link ShortBuffer#remaining() remaining()}/{@link #getConfiguration()}.{@link
-     * ADPCMDecoderConfig#getChannels() getChannels()}</tt> samples from <tt>in</tt>.
+     * Decodes the contents of buffer {@code in} as ADPCM audio samples and writes the resulting PCM data to buffer
+     * {@code out}.
      * @param in  input buffer; contains ADPCM data
      * @param out output buffer for 16-bit PCM data
-     * @return <tt>out</tt>
+     * @return {@code out}
      * @throws IOException when an encoding problem occurs
      */
     public ShortBuffer decode(ByteBuffer in, ShortBuffer out) throws IOException {
