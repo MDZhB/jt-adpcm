@@ -1,5 +1,7 @@
 package com.jiggawatt.jt.tools.adpcm;
 
+import com.jiggawatt.jt.tools.adpcm.impl.ADPCMUtil;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
@@ -107,8 +109,8 @@ public final class ADPCMEncoder {
             int numBytes = encodeBlock(ctx, adpcmBlock, pcmBlock, blockAdpcmSamples);
             if (numBytes != currentBlockSize) {
                 throw new ADPCMEncodingException(
-                        "unexpected number of bytes encoded; " +
-                        "expected "+currentBlockSize+", found "+numBytes
+                    "unexpected number of bytes encoded; " +
+                    "expected "+currentBlockSize+", found "+numBytes
                 );
             }
 
@@ -172,7 +174,7 @@ public final class ADPCMEncoder {
         ADPCMContext.Channel chan = ctx.getChannel(ch);
         int csample    = inBuf[inPtr];
         int depth      = numSamples -1;
-        int step       = ADPCM.stepTable(chan.index);
+        int step       = ADPCMUtil.stepTable(chan.index);
         int trialDelta = step >> 3;
 
         switch (shaping) {
@@ -200,7 +202,7 @@ public final class ADPCMEncoder {
         if ((nibble & 8)!=0) trialDelta = -trialDelta;
 
         chan.pcmData += trialDelta;
-        chan.index   += ADPCM.indexTable(nibble & 0x07);
+        chan.index   += ADPCMUtil.indexTable(nibble & 0x07);
         chan.index = clip(chan.index, 0, 88);
         chan.pcmData = clip(chan.pcmData, -32768, 32767);
 
@@ -215,7 +217,7 @@ public final class ADPCMEncoder {
         ADPCMContext.Channel chan = new ADPCMContext.Channel(pchan);
 
         int delta      = csample - chan.pcmData;
-        int step       = ADPCM.stepTable(chan.index);
+        int step       = ADPCMUtil.stepTable(chan.index);
         int trialDelta = (step >> 3);
 
         int    nibble;
@@ -246,7 +248,7 @@ public final class ADPCMEncoder {
         minError = (double) (chan.pcmData - csample) * (chan.pcmData - csample);
 
         if (depth!=0) {
-            chan.index += ADPCM.indexTable(nibble & 0x07);
+            chan.index += ADPCMUtil.indexTable(nibble & 0x07);
             chan.index = clip(chan.index, 0, 88);
             minError += minimumError(chan, numChannels, inBuf[inPtr+numChannels], inBuf, inPtr + numChannels, depth - 1, null);
         } else {
@@ -274,7 +276,7 @@ public final class ADPCMEncoder {
             error = (double) (chan.pcmData - csample) * (chan.pcmData - csample);
 
             if (error < minError) {
-                chan.index += ADPCM.indexTable(nibble2 & 0x07);
+                chan.index += ADPCMUtil.indexTable(nibble2 & 0x07);
                 chan.index = clip(chan.index, 0, 88);
                 error += minimumError(chan, numChannels, inBuf[inPtr+numChannels], inBuf, inPtr+numChannels, depth - 1, null);
 

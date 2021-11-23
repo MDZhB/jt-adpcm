@@ -1,5 +1,7 @@
 package com.jiggawatt.jt.tools.adpcm;
 
+import com.jiggawatt.jt.tools.adpcm.impl.ADPCMUtil;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
@@ -74,6 +76,10 @@ public final class ADPCMDecoder {
                 blockPcmSamples   = numSamples;
             }
 
+            if (in.remaining() < currentBlockSize) {
+                throw new IOException("too few elements left in input buffer");
+            }
+
             in.get(adpcmBlock, 0, currentBlockSize);
 
             decodeBlock(pcmBlock, adpcmBlock, currentBlockSize);
@@ -89,10 +95,6 @@ public final class ADPCMDecoder {
         byte[] index   = new byte[2];
         int    outPtr  = 0;
         int    inPtr   = 0;
-
-        if (inBufSize < numChannels*4) {
-            throw new IOException("too few elements left in input buffer");
-        }
 
         for (int ch=0; ch<numChannels; ch++) {
             int a = Byte.toUnsignedInt(inBuf[inPtr]);
@@ -114,7 +116,7 @@ public final class ADPCMDecoder {
         while ((chunks--)> 0) {
             for (int ch=0; ch<numChannels; ch++) {
                 for (int i=0; i<4; i++) {
-                    int step = ADPCM.stepTable(index[ch]);
+                    int step = ADPCMUtil.stepTable(index[ch]);
 
                     int delta = step >> 3;
                     int v = Byte.toUnsignedInt(inBuf[inPtr]);
@@ -125,12 +127,12 @@ public final class ADPCMDecoder {
                     if ((v & 8) != 0) delta = -delta;
 
                     pcmData[ch] += delta;
-                    index  [ch] += ADPCM.indexTable(v & 0x7);
+                    index  [ch] += ADPCMUtil.indexTable(v & 0x7);
                     index  [ch]  = clip(index[ch], 0, 88);
                     pcmData[ch]  = clip(pcmData[ch], -32768, 32767);
                     outBuf[outPtr + i*2*numChannels] = (short)pcmData[ch];
 
-                    step = ADPCM.stepTable(index[ch]);
+                    step = ADPCMUtil.stepTable(index[ch]);
                     delta = step >> 3;
 
                     if ((v & 0x10) != 0) delta += (step >> 2);
@@ -139,7 +141,7 @@ public final class ADPCMDecoder {
                     if ((v & 0x80) != 0) delta = -delta;
 
                     pcmData[ch] += delta;
-                    index  [ch] += ADPCM.indexTable((v >> 4) &0x7);
+                    index  [ch] += ADPCMUtil.indexTable((v >> 4) &0x7);
                     index  [ch]  = clip(index[ch], 0, 88);
                     pcmData[ch]  = clip(pcmData[ch], -32768, 32767);
                     outBuf[outPtr + (i*2+1)*numChannels] = (short) pcmData[ch];

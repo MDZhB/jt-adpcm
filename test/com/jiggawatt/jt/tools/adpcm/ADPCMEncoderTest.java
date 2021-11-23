@@ -1,19 +1,20 @@
 package com.jiggawatt.jt.tools.adpcm;
 
-import com.jiggawatt.jt.tools.adpcm.data.WAVFile;
-import org.junit.Test;
+import com.jiggawatt.jt.tools.adpcm.data.TestUtils;
+import com.jiggawatt.jt.tools.adpcm.util.WAVFile;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class ADPCMEncoderTest {
 
     // encoding with dynamic noise shaping
-    //==================================================================================================================
+    // =================================================================================================================
     @Test
     public void encode_16bit_44100Hz_stereo() throws IOException {
         doTest(16, 44100, 2, true);
@@ -34,8 +35,20 @@ public class ADPCMEncoderTest {
         doTest(16, 8000, 1, true);
     }
 
-    // encoding without dynamic noise shaping
+    // encoding with static noise shaping
     //==================================================================================================================
+    @Test
+    public void encode_16bit_88200Hz_mono() throws IOException {
+        doTest(16, 88200, 1, true);
+    }
+
+    @Test
+    public void encode_16bit_88200Hz_stereo() throws IOException {
+        doTest(16, 88200, 2, true);
+    }
+
+    // encoding without noise shaping
+    // =================================================================================================================
     @Test
     public void encode_16bit_44100Hz_stereo_flat() throws IOException {
         doTest(16, 44100, 2, false);
@@ -58,21 +71,21 @@ public class ADPCMEncoderTest {
 
     private void doTest(int bits, int sampleRate, int channels, boolean shape) throws IOException {
         // load test data
-        //--------------------------------------------------------------------------------------------------------------
-        WAVFile inputWav  = new WAVFile("pcm_"  +name(bits, sampleRate, channels, false));
-        WAVFile expectWav = new WAVFile("adpcm_"+name(bits, sampleRate, channels, !shape));
+        // -------------------------------------------------------------------------------------------------------------
+        WAVFile inputWav  = TestUtils.getClasspathWav("pcm_" + name(bits, sampleRate, channels, false));
+        WAVFile expectWav = TestUtils.getClasspathWav("adpcm_"+name(bits, sampleRate, channels, !shape));
 
         ADPCMEncoderConfig cfg = ADPCMEncoder.configure()
-                .setChannels(channels)
-                .setSampleRate(sampleRate)
-                .setNoiseShaping(shape)
-                .end();
+            .setChannels(channels)
+            .setSampleRate(sampleRate)
+            .setNoiseShaping(shape)
+            .end();
 
         ShortBuffer input  = inputWav.getReadOnlyData().asShortBuffer();
         ByteBuffer  expect = expectWav.getReadOnlyData();
 
         // encode
-        //--------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------
         ByteBuffer actual =
             new ADPCMEncoder(cfg)
             .encode(
@@ -81,7 +94,7 @@ public class ADPCMEncoderTest {
             .rewind();
 
         // test encoded data
-        //--------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------
         assertEquals(expect.capacity(), actual.capacity());
         while (expect.hasRemaining()) {
             assertEquals(expect.get(), actual.get());
