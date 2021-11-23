@@ -76,6 +76,10 @@ public final class ADPCMDecoder {
                 blockPcmSamples   = numSamples;
             }
 
+            if (in.remaining() < currentBlockSize) {
+                throw new IOException("too few elements left in input buffer");
+            }
+
             in.get(adpcmBlock, 0, currentBlockSize);
 
             decodeBlock(pcmBlock, adpcmBlock, currentBlockSize);
@@ -91,10 +95,6 @@ public final class ADPCMDecoder {
         byte[] index   = new byte[2];
         int    outPtr  = 0;
         int    inPtr   = 0;
-
-        if (inBufSize < numChannels*4) {
-            throw new IOException("too few elements left in input buffer");
-        }
 
         for (int ch=0; ch<numChannels; ch++) {
             int a = Byte.toUnsignedInt(inBuf[inPtr]);
