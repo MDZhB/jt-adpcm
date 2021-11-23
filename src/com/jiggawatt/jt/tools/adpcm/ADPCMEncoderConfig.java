@@ -19,6 +19,11 @@ public final class ADPCMEncoderConfig {
 
     public static final int AUTO_BLOCK_SIZE = -1;
 
+    /**
+     * Configures and produces instances of {@link ADPCMEncoderConfig}. Use {@link ADPCMEncoder#configure()} to obtain
+     * an instance of this class.
+     * @author Nikita Leonidov
+     */
     public static final class Builder {
         private int     channels     = 2;
         private int     sampleRate   = 44100;
@@ -67,7 +72,7 @@ public final class ADPCMEncoderConfig {
         /**
          * Enables or disables dynamic noise shaping. Encoding with noise shaping reduces apparent quantization noise.
          * Dynamic noise shaping is enabled by default.
-         * @param on  <tt>true</tt> to enable dynamic noise shaping, <tt>false</tt> to disable
+         * @param on  {@code true} to enable dynamic noise shaping, {@code false} to disable
          * @return this builder
          */
         public Builder setNoiseShaping(boolean on) {
@@ -135,7 +140,7 @@ public final class ADPCMEncoderConfig {
     }
 
     /**
-     * @return <tt>true</tt> when noise shaping is on, <tt>false</tt> when off
+     * @return {@code true} when noise shaping is on, {@code false} when off
      * @see ADPCMEncoderConfig.Builder#setNoiseShaping(boolean)
      */
     public boolean getNoiseShaping() {

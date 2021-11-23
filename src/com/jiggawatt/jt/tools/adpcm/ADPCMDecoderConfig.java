@@ -15,6 +15,11 @@ public final class ADPCMDecoderConfig {
 
     public static final int AUTO_BLOCK_SIZE = -1;
 
+    /**
+     * Configures and produces instances of {@link ADPCMDecoderConfig}. Use {@link ADPCMDecoder#configure()} to obtain
+     * an instance of this class.
+     * @author Nikita Leonidov
+     */
     public static final class Builder {
         private int     channels   = 2;
         private int     blockSize  = AUTO_BLOCK_SIZE;
