@@ -2,13 +2,18 @@ package com.jiggawatt.jt.tools.adpcm;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import java.util.List;
 
 import static com.jiggawatt.jt.tools.adpcm.ADPCMEncoderConfig.AUTO_BLOCK_SIZE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 public class ADPCMEncoderConfigTest {
 
@@ -117,6 +122,34 @@ public class ADPCMEncoderConfigTest {
     @Test
     public void computesBlockSizeForAutoSetting() {
         doTestAutoBlockSize(ADPCMEncoder.configure().setBlockSize(AUTO_BLOCK_SIZE));
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    public void computesBytesPerSecond(int expect, int channels, int sampleRate, int blockSize) {
+        assertEquals(
+            expect,
+            ADPCMEncoder.configure()
+                .setChannels(channels)
+                .setSampleRate(sampleRate)
+                .setBlockSize(blockSize)
+                .end()
+            .getBytesPerSecond()
+        );
+    }
+
+    private static List<Arguments> computesBytesPerSecond() {
+        return List.of(
+            //         expect | channels | sampleRate | blockSize
+            arguments(   4055,         1,        8000,        256),
+            arguments(   8224,         2,        8000,        256),
+            arguments(  22355,         1,       44100,        256),
+            arguments(  45339,         2,       44100,        256),
+            arguments(   4027,         1,        8000,        512),
+            arguments(   8110,         2,        8000,        512),
+            arguments(  22201,         1,       44100,        512),
+            arguments(  44711,         2,       44100,        512)
+        );
     }
 
     private void doTestAutoBlockSize(ADPCMEncoderConfig.Builder builder) {
