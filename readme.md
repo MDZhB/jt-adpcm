@@ -1,5 +1,5 @@
 # jt-adpcm
-[![Javadocs](https://www.javadoc.io/badge/com.github.mdzhb/jt-adpcm.svg)](https://www.javadoc.io/doc/com.github.mdzhb/jt-adpcm)
+[![Maven Central](https://img.shields.io/maven-central/v/com.github.mdzhb/jt-adpcm)](https://repo1.maven.org/maven2/com/github/mdzhb/jt-adpcm/) [![Javadocs](https://www.javadoc.io/badge/com.github.mdzhb/jt-adpcm.svg)](https://www.javadoc.io/doc/com.github.mdzhb/jt-adpcm)
 
 ## Summary
 `jt-adpcm` provides a high-quality ADPCM encoder and an ADPCM decoder for Java 9+. It is a port of David Bryant's [ADPCM-XQ](https://github.com/dbry/adpcm-xq) library. 
@@ -80,7 +80,7 @@ void encode(boolean shape, InputStream in, OutputStream out) throws IOException 
 ```
 Dumping a decoded file works similarly.
 ```java
-void decode(boolean shape, InputStream in, OutputStream out) throws IOException {
+void decode(InputStream in, OutputStream out) throws IOException {
     WAVFile    wavInput   = WAVFile.fromStream(in);
     ByteBuffer adpcmInput = wavInput.getReadOnlyData();
 
