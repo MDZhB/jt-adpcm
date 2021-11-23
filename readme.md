@@ -11,7 +11,7 @@ Add the following to the `<dependencies>` element in your `pom.xml`:
 <dependency>
   <groupId>com.github.mdzhb</groupId>
   <artifactId>jt-adpcm</artifactId>
-  <version>1.0.1</version>
+  <version>1.1.0</version>
 </dependency>
 ```
 ### Encoding
@@ -51,8 +51,8 @@ ShortBuffer decodeADPCM(ByteBuffer adpcmInput, int channels, int samples, int sa
     return new ADPCMDecoder(cfg).decode(adpcmInput, pcmOutput).rewind();
 }
 ```
-### File IO
-To read and write WAV files, use the `WAVFile` class. The following example illustrates how you might read a PCM file and write an ADPCM-encoded one using IO streams.
+### File I/O
+To read and write WAV files, use the `com.jiggawatt.jt.tools.adpcm.util.WAVFile` class. The following example reads a PCM file using an `InputStream`, encodes it, and dumps the resulting ADPCM audio to another file. It uses the information stored in the input WAV header to configure the encoder.
 ```java
 void encode(boolean shape, InputStream in, OutputStream out) throws IOException {
     // use one of the `WAVFile` factory methods to obtain an instance
@@ -102,4 +102,3 @@ void decode(boolean shape, InputStream in, OutputStream out) throws IOException 
     wavOutput.dump(out);
 }
 ```
-
