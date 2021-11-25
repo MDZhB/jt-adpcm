@@ -95,7 +95,7 @@ void decode(InputStream in, OutputStream out) throws IOException {
     ByteBuffer pcmOutput = ByteBuffer.allocate(wavInput.getNumSamples() * wavInput.getChannels() * 2);
     new ADPCMDecoder(cfg).decode(adpcmInput, pcmOutput.asShortBuffer());
 
-    // this convenience method generates WAV header info from your encoder configuration
+    // create a pcm wav file from the decoder's output
     WAVFile wavOutput = WAVFile.fromPCMBuffer(pcmOutput, wavInput.getChannels(), wavInput.getSampleRate());
 
     // finally, WAVFile.dump() writes the file to the given stream 
