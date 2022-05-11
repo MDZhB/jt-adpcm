@@ -86,7 +86,7 @@ void decode(InputStream in, OutputStream out) throws IOException {
 
     // the input `WAVFile` gives us the information we need to configure the decoder
     ADPCMDecoderConfig cfg =
-    ADPCMDecoder.configure()
+        ADPCMDecoder.configure()
         .setChannels  (wavInput.getChannels())
         .setSampleRate(wavInput.getSampleRate())
         .setBlockSize (wavInput.getBlockSize())
